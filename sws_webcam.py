@@ -9,8 +9,8 @@ import cv2
 import sys
 from bluepy.btle import Scanner, DefaultDelegate
 from bluepy.btle import UUID, Peripheral
-from time import sleep
 
+from time import sleep
 from datetime import datetime
 ##########################################################################
 dict_state = {'init':0, 'IMU_on':1, 'cam_on': 2, 'IMU_off':3, 'cam_off':4}
@@ -38,9 +38,10 @@ class MyDelegate(DefaultDelegate):
 
     #func is caled on notifications
     def handleNotification(self, cHandle, data):
+        print
         motion_data = struct.unpack('hhhhhhhhh',data) # 18byte
         #print(motion_data)
-                
+        
         global mAccelerometerX
         global mAccelerometerY
         global mAccelerometerZ
@@ -66,17 +67,18 @@ class ScanDelegate(DefaultDelegate):
         elif isNewData:
             print ("Received new data from", dev.addr)
 ############################################################################
-def RCV_IMU():
+def RCV_IMU(p):
     global data_flag
-    global count
 
+    count = 0
+    file_path = ""
     while True:       
         if p.waitForNotifications(1.0):#handleNotification() called
             if data_flag == dict_state['init']:
-                    global file_path
                     date = datetime.now().strftime('%Y%m%d_%H%M%S')
-                    file_path = ('/home/pi/Documents/sws/'+ date +'.csv')
+                    file_path = ('/home/pi/Documents/sws/'+ date + '(' +p.addr + ')' +'.csv')
                     with open(file_path, 'a') as out_file:
+                        print(mAccelerometerX, "|", p.addr)
                         out_file.write("sequence,AccelerometerX,AccelerometerY,AccelerometerZ,GyroscopeX,GyroscopeY,GyroscopeZ\n")
                     print('IMU record start : ' + file_path)
                     data_flag = dict_state['IMU_on']
@@ -85,7 +87,7 @@ def RCV_IMU():
                 with open(file_path, 'a') as out_file:
                     out_file.write("%d,%d,%d,%d,%d,%d,%d\n"%(count,mAccelerometerX, mAccelerometerY, mAccelerometerZ, mGyroscopeX, mGyroscopeY, mGyroscopeZ))
                 count = count + 1
-                if count == 15000: # Every 5min
+                if count == 15000: 
                     data_flag = dict_state['IMU_off']
         
             if data_flag == dict_state['cam_off']:
@@ -122,36 +124,32 @@ def RCV_cam():
 ###########################################################################start
 scanner = Scanner()
 devices = scanner.scan(6.0)
-for dev in devices:
-    #print ("Device %s (%s), RSSI=%d dB" % (dev.addr, dev.addrType, dev.rssi))
+Peripherals = []
 
+for dev in devices:
     for (adtype, desc, value) in dev.getScanData():
-     #   print ("  %s = %s" % (desc, value))
         if target_name == value:
             print(value)
             target_address = dev.addr
             print(dev.addr)
+            # create peripheral class
+            Peripherals.append(Peripheral(target_address,"random"))
             break
 
-# create peripheral class
-p = Peripheral(target_address,"random")
+for p in Peripherals :
+    #Get MotionService
+    MotionService=p.getServiceByUUID(motion_service_uuid)
+    p.setDelegate( MyDelegate(p) )
+    # Get The Motion-Characteristics
+    MotionC = MotionService.getCharacteristics(motion_char_uuid)[0]
+    #Get The handle tf the  Button-Characteristics
+    hMotionC=MotionC.getHandle()+1
+    # Turn notifications on by setting bit0 in the CCC more info on:
+    p.writeCharacteristic(hMotionC, struct.pack('<bb', 0x01, 0x00), withResponse=True)
+    print ("Notification is turned on for Raw_data")
+    t = threading.Thread(target = RCV_IMU, args = (p,))
+    threads.append(t)
 
-#Get MotionService
-MotionService=p.getServiceByUUID(motion_service_uuid)
-p.setDelegate( MyDelegate(p) )
-
-# Get The Motion-Characteristics
-MotionC = MotionService.getCharacteristics(motion_char_uuid)[0]
-
-#Get The handle tf the  Button-Characteristics
-hMotionC=MotionC.getHandle()+1
-#print("  0x"+ format(hMotionC,'X') )
-
-# Turn notifications on by setting bit0 in the CCC more info on:
-p.writeCharacteristic(hMotionC, struct.pack('<bb', 0x01, 0x00), withResponse=True)
-print ("Notification is turned on for Raw_data")
-################################################################################
-threads.append(threading.Thread(target = RCV_IMU))
 threads.append(threading.Thread(target = RCV_cam))
 
 for iter in range(len(threads)) :
