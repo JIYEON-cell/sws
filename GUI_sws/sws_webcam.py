@@ -379,6 +379,7 @@ class _Peripheral(_BluepyHelper) :
         self.disconnect()
 '''
 ############################################################################
+count = 0
 def RCV_IMU(p, iter_thread, len_thread):
     global data_flag                    # check recording status
                                         # init(gen file) > on rec. IMU > on rec.cam > off rec.IMU > off rec.cam > init > ...
@@ -386,7 +387,7 @@ def RCV_IMU(p, iter_thread, len_thread):
     #bluepy.btle.Debugging = True
     file_flag = [0 for iter in range(len_thread)]
     file_path = ''
-    count = 0
+    global count
     #p_reconn = ''
 
     while True:    
@@ -397,21 +398,18 @@ def RCV_IMU(p, iter_thread, len_thread):
                 if sum(file_flag) == len_thread: # if all thread has generated file
                     data_flag = dict_state['IMU_on']  
 
-                '''
+                
                                         # if thread(iter) does not generated file before record
                 date = datetime.now().strftime('%Y%m%d_%H%M%S')
                 file_path = ('/home/pi/Documents/sws/'+ date + '(' +p.addr + ')' +'.csv')
                 with open(file_path, 'a') as out_file:
                     out_file.write("sequence,AccelerometerX,AccelerometerY,AccelerometerZ,GyroscopeX,GyroscopeY,GyroscopeZ\n")
                 print('record start : ' + file_path)
-                '''
+                
 
             if data_flag == dict_state['cam_on']:
-                '''
                 with open(file_path, 'a') as out_file:
                     out_file.write("%d,%d,%d,%d,%d,%d,%d\n"%(count,mAccelerometerX, mAccelerometerY, mAccelerometerZ, mGyroscopeX, mGyroscopeY, mGyroscopeZ))
-                '''
-                #print(count, '||' ,mAccelerometerX, mAccelerometerY, mAccelerometerZ, mGyroscopeX, mGyroscopeY, mGyroscopeZ)
                 
                 count = count + 1
                 if (count == 60000) and (iter_thread == (len_thread - 1)): # if last IMU thread finished recording 
@@ -458,7 +456,6 @@ def RCV_cam():
             '''
             data_flag = dict_state['cam_on']
             
-            #print("cam start : ", date)
             '''
         if data_flag == dict_state['cam_on']: # recording
             
@@ -475,13 +472,15 @@ def RCV_cam():
             data_flag = dict_state['cam_off'] # finish camera record
 
 def GUI():
-
     global data_flag
+
+    global count
     root = Tk() #
     root.title('MHE_MeasureWindow')
-    root.geometry('960x540+10+10')
+    root.geometry('720x456+0+0')
     root.resizable(False, False)
 
+    '''
     Imgobj_logo = PhotoImage(file = "./MHE.png")
     Img_logo = Label(root, image=Imgobj_logo)
     Img_logo.place(anchor = 'ne', relx = 1, rely=0)
@@ -489,40 +488,45 @@ def GUI():
     Imgobj_wheel = PhotoImage(file = "./_vehicle.png")
     Img_wheel = Label(root, image = Imgobj_wheel, width = 500, height = 258)
     Img_wheel.place(anchor = 'sw', relx = 0.05, rely = 0.9)
+    '''
 
-    frame = Frame(root, width = 150)
-    frame.place( anchor='se', relx = 0.95, rely = 0.9)
+    background_image=PhotoImage(file = "_bg.png")
+    background_label = Label(root, image=background_image)
+    background_label.place(x=0, y=0, relwidth=1, relheight=1)
+
+    frame = Frame(root, width = 150, background = 'white')
+    frame.place(anchor='nw', relx = 0.05, rely = 0.08)
 
     fontstyle = tkFont.Font(family = 'Courier', size = 12)
 
-    lbl_accelx = Label(frame, text = "Accel_X", font = fontstyle, pady=5, relief = 'solid', borderwidth = 1, width = 10)
+    lbl_accelx = Label(frame, text = "Accel_X", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 10, background = 'white')
     lbl_accelx.grid(row = 0, column = 0)
-    lbl_accely = Label(frame, text = "Accel_Y", font = fontstyle, pady=5, relief = 'solid', borderwidth = 1, width = 10)
+    lbl_accely = Label(frame, text = "Accel_Y", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 10, background = 'white')
     lbl_accely.grid(row = 0, column = 1)
-    lbl_accelz = Label(frame, text = "Accel_Z", font = fontstyle, pady=5, relief = 'solid', borderwidth = 1, width = 10)
+    lbl_accelz = Label(frame, text = "Accel_Z", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 10, background = 'white')
     lbl_accelz.grid(row = 0, column = 2)
-    lbl_gyrox = Label(frame, text = "Gyro_X", font = fontstyle, pady=5, relief = 'solid', borderwidth = 1, width = 10)
+    lbl_gyrox = Label(frame, text = "Gyro_X", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 10, background = 'white')
     lbl_gyrox.grid(row = 2, column = 0)
-    lbl_gyroy = Label(frame, text = "Gyro_Y", font = fontstyle, pady=5, relief = 'solid', borderwidth = 1, width = 10)
+    lbl_gyroy = Label(frame, text = "Gyro_Y", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 10, background = 'white')
     lbl_gyroy.grid(row = 2, column = 1)
-    lbl_gyroz = Label(frame, text = "Gyro_Z", font = fontstyle, pady=5, relief = 'solid', borderwidth = 1, width = 10)
+    lbl_gyroz = Label(frame, text = "Gyro_Z", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 10, background = 'white')
     lbl_gyroz.grid(row = 2, column = 2)
-    lbl_velx = Label(frame, text = "Velocity_X", font = fontstyle, pady=5, relief = 'solid', borderwidth = 1, width = 10)
+    lbl_velx = Label(frame, text = "Velocity_X", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 10, background = 'white')
     lbl_velx.grid(row = 4, column = 0)
-    lbl_vely = Label(frame, text = "Velocity_Y", font = fontstyle, pady=5, relief = 'solid', borderwidth = 1, width = 10)
+    lbl_vely = Label(frame, text = "Velocity_Y", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 10, background = 'white')
     lbl_vely.grid(row = 4, column = 1)
-    lbl_velz = Label(frame, text = "Velocity_Z", font = fontstyle, pady=5, relief = 'solid', borderwidth = 1, width = 10)
+    lbl_velz = Label(frame, text = "Velocity_Z", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 10, background = 'white')
     lbl_velz.grid(row = 4, column = 2)
-    lbl_rotcnt = Label(frame, text = "Rot.count", font = fontstyle, pady=5, relief = 'solid', borderwidth = 1, width = 10)
+    lbl_rotcnt = Label(frame, text = "Rot.count", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 10, background = 'white')
     lbl_rotcnt.grid(row = 6, column = 1)
-    lbl_Dist = Label(frame, text = "Distance", font = fontstyle, pady=5, relief = 'solid', borderwidth = 1, width = 10)
+    lbl_Dist = Label(frame, text = "Distance", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 10, background = 'white')
     lbl_Dist.grid(row = 6, column = 2)
 
     var = []
     lbl_txt = []
     for iter in range(11) :
         var.append(StringVar())
-        lbl_txt.append(Label(frame, textvariable = var[-1], font = fontstyle, pady=5))
+        lbl_txt.append(Label(frame, textvariable = var[-1], font = fontstyle, pady=2, background = 'white'))
     
     lbl_txt[0].grid(row = 1, column = 0)
     lbl_txt[1].grid(row = 1, column = 1)
@@ -530,7 +534,7 @@ def GUI():
     lbl_txt[3].grid(row = 3, column = 0)
     lbl_txt[4].grid(row = 3, column = 1)
     lbl_txt[5].grid(row = 3, column = 2)
-    lbl_txt[6].grid(row = 3, column = 0)
+    lbl_txt[6].grid(row = 5, column = 0)
     lbl_txt[7].grid(row = 5, column = 1)
     lbl_txt[8].grid(row = 5, column = 2)
     lbl_txt[9].grid(row = 7, column = 1)
@@ -553,10 +557,11 @@ def GUI():
     '''
     
     while True :
+        IMU_tmp = [mAccelerometerX, mAccelerometerY, mAccelerometerZ, mGyroscopeX, mGyroscopeY, mGyroscopeZ]
         for iter in range(6) :
-            IMU_tmp = [mAccelerometerX, mAccelerometerY, mAccelerometerZ, mGyroscopeX, mGyroscopeY, mGyroscopeZ]
             var[iter].set(IMU_tmp[iter])
-            frame.update()
+        var[-1].set(count)
+        frame.update()
 ###########################################################################start
 def main():
     #bluepy.btle.Debugging = True
@@ -572,7 +577,6 @@ def main():
     
     for iter in range(len(Peripherals)) :
         Peripherals[iter].setDelegate( MyDelegate(Peripherals[iter]) )
-        
         # Get MotionService
         MotionService=Peripherals[iter].getServiceByUUID(motion_service_uuid)
         # Get The Motion-Characteristics
