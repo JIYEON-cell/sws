@@ -36,6 +36,7 @@ def RCV_IMU(s, i):
     timestamp_ = 0
 
     while True:
+        # initialize : make .csv and write first row
         if (flag == 0):
             #create csv file
             date = datetime.now().strftime('%y%m%d_%H%M%S')
@@ -47,6 +48,7 @@ def RCV_IMU(s, i):
             
             flag = 1
 
+        # IMU records data to .csv
         if (flag == 1):
             data = s.read_until( b'UU')
             if len(data) == 32:
@@ -75,10 +77,14 @@ def RCV_IMU(s, i):
         if cnt >= 30000: # after 5 min (100Hz receiving)
             flag = 2
         
+        # if record end, initialize variables and return to start
         if (flag == 2):
             print("IMU " + str(i) + " end : ", time.time() - start)
             flag = 0
             cnt = 0
+
+# if you use usb cam, uncomment this
+# problem : videowriter recorded video time does not match with real recording time
 '''
 def RCV_cap():
     global flag
@@ -167,6 +173,7 @@ def GUI():
     dist
 
     '''
+    # when IMU records data, update GUI window
     while flag == 1 :
         if type(data) != type((1,)) or len(data) != 17  : continue
 
@@ -207,6 +214,9 @@ while True:
 
 for iter in range(len(ser_)):
    threads.append(threading.Thread(target = RCV_IMU, args = (ser_[iter], iter)))
+
+# if you use usb cam, uncomment this
+# threads.append(threading.Thread(target = rcv_cam))
 
 threads.append(threading.Thread(target = GUI))
 
