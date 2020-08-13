@@ -64,27 +64,12 @@ def RCV_IMU(s, i):
                 
                 if Euler * Euler_ < -1:
                     t.append(timestamp_)
-                '''
-                if Euler * Euler_ < -8.8 :
-                    Tp = (timestamp_ - time_ref) + (pi - Euler) * (timestamp - timestamp_) / (Euler_ + Euler)
-                    RPM = 60 / Tp
-                    time_ref = timestamp
-                '''
+
                 if len(t) == 2 : # time period during one rotation
                     RPM = 60 / (t[1] - t[0])
                     
                     dist = dist + pi*2*0.305
                     t.remove(t[0])
-                
-                '''
-                diff = Euler - Euler_
-                if diff == 0.0 : continue
-
-                Tp = timestamp + (((pi - Euler) * (timestamp - timestamp_)) / (diff))
-                RPM = 60 / Tp
-
-                print(RPM)
-                '''
                 
                 file_.write("%d, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %d\r\n"%(cnt, data[2]/100, data[3]/100, data[4]/100, data[5]/10, data[6]/10, data[7]/10, data[8]/1000, data[9]/1000, data[10]/1000, data[11]/10, data[12]/10, data[13]/10, RPM))
             cnt = cnt + 1
