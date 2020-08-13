@@ -15,10 +15,13 @@ from PIL import Image, ImageTk
 # gui for EBIMU24GV5
 ##########################################################################
 flag = 0
-pi = math.pi
-data = []
 RPM = 0
 dist = 0
+cnt = 0
+pi = math.pi
+data = []
+threads = []
+###########################################################################
 def RCV_IMU(s, i):
     t = []
     global flag
@@ -27,28 +30,22 @@ def RCV_IMU(s, i):
     global dist
     cnt = 0
     pi = math.pi
+    Euler = 0
+    Euler_ = 0
+    timestamp = 0
+    timestamp_ = 0
+
     while True:
         if (flag == 0):
-    #########################################create csv file
+            #create csv file
             date = datetime.now().strftime('%y%m%d_%H%M%S')
             file_path = ('/home/pi/Desktop/IMU_hex_testing/'+date+'('+str(i)+').csv')
             print("IMU "+str(i)+" start time :" ,date)
             file_ = open(file_path, 'a')
-            file_.write("sequence,EulerR,EulerP,EulerY,GyroX,GyroY,GyroZ,AccelX,AccelY,AccelZ,MagnetX,MagnetY,MagnetZ,RPM\r\n")
+            file_.write("sequence,EulerR,EulerP,EulerY,GyroX,GyroY,GyroZ,AccelX,AccelY,AccelZ,MagnetX,MagnetY,MagnetZ,RPM,time\r\n")
             start = time.time()
             
             flag = 1
-            
-            while True:
-                data = s.read_until( b'UU')
-                if len(data) == 32:
-                    data = struct.unpack('>BBhhhhhhhhhhhhHhh', data)
-
-                    Euler = float(data[4] / 100) * pi / 180
-                    timestamp = time.time()
-                    time_ref = timestamp
-                    
-                    break
 
         if (flag == 1):
             data = s.read_until( b'UU')
@@ -61,29 +58,28 @@ def RCV_IMU(s, i):
                 Euler = float(data[4] / 100) * pi / 180
                 timestamp = time.time()
                 
-                
                 if Euler * Euler_ < -1:
                     t.append(timestamp_)
 
                 if len(t) == 2 : # time period during one rotation
                     RPM = 60 / (t[1] - t[0])
                     
-                    dist = dist + pi*2*0.305
+                    radius_vehicle = 0.305 # unit : meter(m)
+                    dist = dist + pi * 2 * radius_vehicle # if wheel rotate once, update driven distance
+
                     t.remove(t[0])
                 
-                file_.write("%d, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %d\r\n"%(cnt, data[2]/100, data[3]/100, data[4]/100, data[5]/10, data[6]/10, data[7]/10, data[8]/1000, data[9]/1000, data[10]/1000, data[11]/10, data[12]/10, data[13]/10, RPM))
+                file_.write("%d, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %d, %.3f\r\n"%(cnt, data[2]/100, data[3]/100, data[4]/100, data[5]/10, data[6]/10, data[7]/10, data[8]/1000, data[9]/1000, data[10]/1000, data[11]/10, data[12]/10, data[13]/10, RPM, time.time() - start))
             cnt = cnt + 1
         
-        if cnt >= 300000:
-            flag = 3
+        if cnt >= 30000: # after 5 min (100Hz receiving)
+            flag = 2
         
-        if (flag == 3):
+        if (flag == 2):
             print("IMU " + str(i) + " end : ", time.time() - start)
             flag = 0
             cnt = 0
-
-        
-
+'''
 def RCV_cap():
     global flag
     fps = 10
@@ -106,10 +102,10 @@ def RCV_cap():
             out.release()
             flag = 3
 #            delay = delay + 5
-            
+'''    
 def GUI():
-    global data_flag
-    global count
+    global flag
+
     root = Tk() #
     root.title('MHE_MeasureWindow')
     root.geometry('720x456+0+0')
@@ -167,7 +163,7 @@ def GUI():
     velx
     vely
     velz
-    rot.count
+    RPM
     dist
 
     '''
@@ -185,10 +181,7 @@ def GUI():
         var[7].set(int(RPM))
 
         frame.update()
-###########################################################################start
-threads = []
-cnt = 0
-
+########################### main #################################
 # determine USBserial device
 port_result = []
 ports = glob.glob('/dev/ttyUSB*')
@@ -211,7 +204,6 @@ while True:
     for s in ser_ :
        if ( s.read(size = 1)) : cnt = cnt + 1
     if cnt == len(ser_): break
-    
 
 for iter in range(len(ser_)):
    threads.append(threading.Thread(target = RCV_IMU, args = (ser_[iter], iter)))
