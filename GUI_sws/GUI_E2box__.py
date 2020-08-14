@@ -34,7 +34,9 @@ def RCV_IMU(s, i):
     Euler_ = 0
     timestamp = 0
     timestamp_ = 0
-
+    pos_threshold = 0.5 * pi
+    neg_threshold = -pos_threshold
+    
     while True:
         # initialize : make .csv and write first row
         if (flag == 0):
@@ -57,24 +59,24 @@ def RCV_IMU(s, i):
                 Euler_ = Euler
                 timestamp_ = timestamp
                 
-                Euler = float(data[4] / 100) * pi / 180
+                Euler = float(data[3] / 100) * pi / 180
                 timestamp = time.time()
-                
-                if Euler * Euler_ < -1:
-                    t.append(timestamp_)
 
-                if len(t) == 2 : # time period during one rotation
-                    RPM = 60 / (t[1] - t[0])
+                if (neg_threshold < Euler and Euler < pos_threshold) and (neg_threshold < Euler_ and Euler_ < pos_threshold):
+                    if Euler < 0 and Euler_ > 0:
+                        t.append(timestamp_)
+                    if len(t) == 2 : # time period during one rotation
+                        RPM = 60 / (t[1] - t[0])
                     
-                    radius_vehicle = 0.365 # unit : meter(m)
-                    dist = dist + pi * 2 * radius_vehicle # if wheel rotate once, update driven distance
+                        radius_vehicle = 0.365 # unit : meter(m)
+                        dist = dist + pi * 2 * radius_vehicle # if wheel rotate once, update driven distance
 
-                    t.remove(t[0])
+                        t.remove(t[0])
                 
                 file_.write("%d, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %d, %.3f\r\n"%(cnt, data[2]/100, data[3]/100, data[4]/100, data[5]/10, data[6]/10, data[7]/10, data[8]/1000, data[9]/1000, data[10]/1000, data[11]/10, data[12]/10, data[13]/10, RPM, time.time() - start))
             cnt = cnt + 1
         
-        if cnt >= 300000: # after 5 min (100Hz receiving)
+        if cnt >= 300000: # after 5 min (1000Hz receiving)
             flag = 2
         
         # if record end, initialize variables and return to start
@@ -176,7 +178,7 @@ def GUI():
     # when IMU records data, update GUI window
     while flag == 1 :
         if type(data) != type((1,)) or len(data) != 17  : continue
-        
+
         data_ = data
         var[0].set(data_[8]/1000)
         var[1].set(data_[9]/1000)
