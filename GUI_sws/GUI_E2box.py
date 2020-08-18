@@ -34,8 +34,6 @@ def RCV_IMU(s, i):
     Euler_ = 0
     timestamp = 0
     timestamp_ = 0
-    pos_threshold = 0.5 * pi
-    neg_threshold = -pos_threshold
 
     while True:
         # initialize : make .csv and write first row
@@ -55,34 +53,29 @@ def RCV_IMU(s, i):
             data = s.read_until( b'UU')
             if len(data) == 32:
                 data = struct.unpack('>BBhhhhhhhhhhhhHhh', data)
-
-                # threshold determine - when Euler(before) goes to 180 > Euler(after) goes to -180 (± pi radian)
+                '''
                 Euler_ = Euler
                 timestamp_ = timestamp
                 
                 Euler = float(data[4] / 100) * pi / 180
                 timestamp = time.time()
+                '''
+                Euler_ = Euler
+                timestamp_ = timestamp
                 
+                Euler = float(data[4] / 100)
+                timestamp = time.time()
+                '''
+                # threshold determine - when Euler(before) goes to 180 > Euler(after) goes to -180 (± pi radian)
                 if Euler * Euler_ < -1:
                     t.append(timestamp_)
-
-                # Euler angle(Yaw) + falling edge determine
                 '''
-                if (neg_threshold < Euler and Euler < pos_threshold) and (neg_threshold < Euler_ and Euler_ < pos_threshold):
-                    if Euler < 0 and Euler_ > 0:
-                        t.append(timestamp_)
-                    if len(t) == 2 : # time period during one rotation
-                        RPM = 60 / (t[1] - t[0])
-                    
-                        radius_vehicle = 0.365 # unit : meter(m)
-                        dist = dist + pi * 2 * radius_vehicle # if wheel rotate once, update driven distance
-                
-                        t.remove(t[0])
-                '''
+                # zero crossing(Falling edge) determine
+                if (0 < Euler and Euler < 180) and (-180 < Euler_ and Euler_ < 0):
+                    t.append(timestamp_)
 
                 if len(t) == 2 : # time period during one rotation
                     RPM = 60 / (t[1] - t[0])
-                    
                     radius_vehicle = 0.365 # unit : meter(m)
                     dist = dist + pi * 2 * radius_vehicle # if wheel rotate once, update driven distance
 
