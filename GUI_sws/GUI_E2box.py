@@ -34,6 +34,8 @@ def RCV_IMU(s, i):
     Euler_ = 0
     timestamp = 0
     timestamp_ = 0
+    pos_threshold = 0.5 * pi
+    neg_threshold = -pos_threshold
 
     while True:
         # initialize : make .csv and write first row
@@ -54,6 +56,7 @@ def RCV_IMU(s, i):
             if len(data) == 32:
                 data = struct.unpack('>BBhhhhhhhhhhhhHhh', data)
 
+                # threshold determine - when Euler(before) goes to 180 > Euler(after) goes to -180 (± pi radian)
                 Euler_ = Euler
                 timestamp_ = timestamp
                 
@@ -63,10 +66,24 @@ def RCV_IMU(s, i):
                 if Euler * Euler_ < -1:
                     t.append(timestamp_)
 
+                # Euler angle(Yaw) + falling edge determine
+                '''
+                if (neg_threshold < Euler and Euler < pos_threshold) and (neg_threshold < Euler_ and Euler_ < pos_threshold):
+                    if Euler < 0 and Euler_ > 0:
+                        t.append(timestamp_)
+                    if len(t) == 2 : # time period during one rotation
+                        RPM = 60 / (t[1] - t[0])
+                    
+                        radius_vehicle = 0.365 # unit : meter(m)
+                        dist = dist + pi * 2 * radius_vehicle # if wheel rotate once, update driven distance
+                
+                        t.remove(t[0])
+                '''
+
                 if len(t) == 2 : # time period during one rotation
                     RPM = 60 / (t[1] - t[0])
                     
-                    radius_vehicle = 0.305 # unit : meter(m)
+                    radius_vehicle = 0.365 # unit : meter(m)
                     dist = dist + pi * 2 * radius_vehicle # if wheel rotate once, update driven distance
 
                     t.remove(t[0])
@@ -74,7 +91,7 @@ def RCV_IMU(s, i):
                 file_.write("%d, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %d, %.3f\r\n"%(cnt, data[2]/100, data[3]/100, data[4]/100, data[5]/10, data[6]/10, data[7]/10, data[8]/1000, data[9]/1000, data[10]/1000, data[11]/10, data[12]/10, data[13]/10, RPM, time.time() - start))
             cnt = cnt + 1
         
-        if cnt >= 30000: # after 5 min (100Hz receiving)
+        if cnt >= 300000: # after 5 min (1000Hz receiving)
             flag = 2
         
         # if record end, initialize variables and return to start
@@ -108,11 +125,12 @@ def RCV_cap():
             out.release()
             flag = 3
 #            delay = delay + 5
-'''    
+'''
+
 def GUI():
     global flag
 
-    root = Tk() #
+    root = Tk()
     root.title('MHE_MeasureWindow')
     root.geometry('720x456+0+0')
     root.resizable(False, False)
@@ -176,14 +194,15 @@ def GUI():
     # when IMU records data, update GUI window
     while flag == 1 :
         if type(data) != type((1,)) or len(data) != 17  : continue
+        
+        data_ = data
+        var[0].set(data_[8]/1000)
+        var[1].set(data_[9]/1000)
+        var[2].set(data_[10]/1000)
 
-        var[0].set(data[8]/1000)
-        var[1].set(data[9]/1000)
-        var[2].set(data[10]/1000)
-
-        var[3].set(data[5]/10)
-        var[4].set(data[6]/10)
-        var[5].set(data[7]/10)
+        var[3].set(data_[5]/10)
+        var[4].set(data_[6]/10)
+        var[5].set(data_[7]/10)
         var[6].set(round(dist, 3))
         var[7].set(int(RPM))
 
