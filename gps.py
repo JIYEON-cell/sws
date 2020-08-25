@@ -15,15 +15,22 @@ def GPS_Info():
     nmea_latitude = NMEA_buff[1]                #extract latitude from GPGGA string
     nmea_longitude = NMEA_buff[3]               #extract longitude from GPGGA string
     
+    print('buff :', NMEA_buff)
     print("NMEA Time: ", nmea_time,'\n')
     print ("NMEA Latitude:", nmea_latitude,"NMEA Longitude:", nmea_longitude,'\n')
-    
+
     lat = float(nmea_latitude)                  #convert string into float for calculation
     longi = float(nmea_longitude)               #convertr string into float for calculation
     
-    lat_in_degrees = convert_to_degrees(lat)    #get latitude in degree decimal format
-    long_in_degrees = convert_to_degrees(longi) #get longitude in degree decimal format
-    
+    if nmea_latitude is '' or nmea_longitude is '':
+        print("===========no available GPS data===========")
+    else:
+        lat = float(nmea_latitude)                  #convert string into float for calculation
+        longi = float(nmea_longitude)               #convertr string into float for calculation
+        
+        lat_in_degrees = convert_to_degrees(lat)    #get latitude in degree decimal format
+        long_in_degrees = convert_to_degrees(longi) #get longitude in degree decimal format
+          
 #convert raw NMEA string into degree decimal format   
 def convert_to_degrees(raw_value):
     decimal_value = raw_value/100.00
@@ -65,7 +72,7 @@ point_dist = 0
 
 try:
     while True:
-        received_data = (str)(ser.readline())
+        received_data = str(ser.readline())
         GPGGA_data_available = received_data.find(gpgga_info)
         if (GPGGA_data_available>0):
             GPGGA_buffer = received_data.split("$GPGGA,",1)[1]
