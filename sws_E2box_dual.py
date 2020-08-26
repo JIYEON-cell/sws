@@ -59,32 +59,34 @@ def RCV_IMU(s, i):
             if len(data) == 34:
                 data = struct.unpack('>BBhhhhhhhhhhhhhHhh', data)
 
-                Euler_ = Euler
-                timestamp_ = timestamp
+                # Euler_ = Euler
+                # timestamp_ = timestamp
                 
-                Euler = float(data[4] / 100)
-                timestamp = time.time()
-                if (0 < Euler and Euler < 180) and (-180 < Euler_ and Euler_ < 0):
-                    t.append(timestamp_)
-                if len(t) == 2 : # time period during one rotation
-                    RPM = 60 / (t[1] - t[0])
+                # Euler = float(data[4] / 100)
+                # timestamp = time.time()
+                # if (0 < Euler and Euler < 180) and (-180 < Euler_ and Euler_ < 0):
+                #     t.append(timestamp_)
+                # if len(t) == 2 : # time period during one rotation
+                #     RPM = 60 / (t[1] - t[0])
                     
-                    radius_vehicle = 0.365 # unit : meter(m)
-                    dist = dist + pi * 2 * radius_vehicle # if wheel rotate once, update driven distance
-                    t.remove(t[0])
+                #     radius_vehicle = 0.365 # unit : meter(m)
+                #     dist = dist + pi * 2 * radius_vehicle # if wheel rotate once, update driven distance
+                #     t.remove(t[0])
+                    
              #   print("%d, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %d, %.3f\r\n"%(cnt, data[2]/100, data[3]/100, data[4]/100, data[5]/10, data[6]/10, data[7]/10, data[8]/1000, data[9]/1000, data[10]/1000, data[11]/10, data[12]/10, data[13]/10, RPM, time.time() - start))
 #                file_.write("%d, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %d, %.3f\r\n"%(cnt, data[2]/100, data[3]/100, data[4]/100, data[5]/10, data[6]/10, data[7]/10, data[8]/1000, data[9]/1000, data[10]/1000, data[11]/10, data[12]/10, data[13]/10, RPM, time.time() - start))
             cnt = cnt + 1
         
-        if (time.time() - start)>=60: #cnt >= 300000: after 5 min (1000Hz receiving)
+        if (time.time() - start)>=300: #cnt >= 300000: after 5 min (1000Hz receiving)
             flag = 2
             
         
         # if record end, initialize variables and return to start
         if (flag == 2):
-            print(str(cnt) + " IMU " + str(i) + " end : ", time.time() - start)
-            flag = 0
-            cnt = 0
+            print(str(cnt)+ ","+str(cnt/3000) +"%"  + " IMU " + str(i) + " end : ", time.time() - start)
+            break
+            #flag = 0
+            #cnt = 0
 
 # if you use usb cam, uncomment this
 # problem : videowriter recorded video time does not match with real recording time
