@@ -11,6 +11,7 @@ from datetime import datetime
 from tkinter import *
 import tkinter.font as tkFont
 from PIL import Image, ImageTk
+from multiprocessing import Process
 ##########################################################################
 # gui for EBIMU24GV5
 ##########################################################################
@@ -36,7 +37,7 @@ def RCV_IMU(s, i):
     timestamp_ = 0
     pos_threshold = 0.5 * pi
     neg_threshold = -pos_threshold
-
+    
     root = Tk() #
     root.title('MHE_MeasureWindow')
     root.geometry('720x456+0+0')
@@ -76,20 +77,21 @@ def RCV_IMU(s, i):
         lbl_txt.append(Label(frame, textvariable = var[-1], relief = 'solid', width = 22, borderwidth = 1, font = fontstyle, pady=2, background = 'white'))
         lbl_txt[iter].grid(row = iter, column = 1)
 
-
+   
 
     while True:
         # initialize : make .csv and write first row
         if (flag == 0):
             #create csv file
-            
+            '''
             date = datetime.now().strftime('%y%m%d_%H%M%S')
-            file_path = ('/home/pi/Desktop/IMU_hex_testing/'+date+'('+str(i)+').csv')
+#            file_path = ('/home/pi/Desktop/IMU_hex_testing/'+date+'('+str(i)+').csv')
             print("IMU "+str(i)+" start time :" ,date)
-            file_ = open(file_path, 'a')
-            file_.write("sequence,EulerR,EulerP,EulerY,GyroX,GyroY,GyroZ,AccelX,AccelY,AccelZ,MagnetX,MagnetY,MagnetZ,RPM,time\r\n")
+#            file_ = open(file_path, 'a')
+#            file_.write("sequence,EulerR,EulerP,EulerY,GyroX,GyroY,GyroZ,AccelX,AccelY,AccelZ,MagnetX,MagnetY,MagnetZ,RPM,time\r\n")
+            '''
             start = time.time()
-
+            
             flag = 1
 
         # IMU records data to .csv
@@ -111,7 +113,7 @@ def RCV_IMU(s, i):
                     radius_vehicle = 0.365 # unit : meter(m)
                     dist = dist + pi * 2 * radius_vehicle # if wheel rotate once, update driven distance
                     t.remove(t[0])
-                file_.write("%d, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %d, %.3f\r\n"%(cnt, data[2]/100, data[3]/100, data[4]/100, data[5]/10, data[6]/10, data[7]/10, data[8]/1000, data[9]/1000, data[10]/1000, data[11]/10, data[12]/10, data[13]/10, RPM, time.time() - start))
+#                file_.write("%d, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %d, %.3f\r\n"%(cnt, data[2]/100, data[3]/100, data[4]/100, data[5]/10, data[6]/10, data[7]/10, data[8]/1000, data[9]/1000, data[10]/1000, data[11]/10, data[12]/10, data[13]/10, RPM, time.time() - start))
 
                 if cnt % 500 == 0 : #every 1 second, update GUI
 
