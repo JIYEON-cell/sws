@@ -41,13 +41,13 @@ def RCV_IMU(s, i):
             start = time.time()
             flag[i] = 1
 
-#             if (i == 0) :
-#                 print(str(i) + "camera start")
-#                 camera = PiCamera()
-#                 camera.resolution = (640, 480)
-#                 camera.framerate = 10
-#                 camera.start_preview()
-#                 camera.start_recording('/media/pi/8935-96CD/'+ date +'.h264')
+            if (i == 0) :
+                print(str(i) + "camera start")
+                camera = PiCamera()
+                camera.resolution = (640, 480)
+                camera.framerate = 10
+                camera.start_preview(fullscreen = false, window = (-320,0,640,480))
+                camera.start_recording('/home/pi/Documents/dat/'+ date +'.h264')
 
             
         # IMU records data to .csv
@@ -68,34 +68,44 @@ def RCV_IMU(s, i):
         if (flag[i] == 2):
             print(str(cnt)+ ","+str(cnt/3000) +"%"  + " IMU " + str(i) + " end : ", time.time() - start)
             
-#             if (i == 0):
-#                 print("camera end")
-#                 camera.stop_recording()
-#                 camera.stop_preview()
+            if (i == 0):
+                print("camera end")
+                camera.stop_recording()
+                camera.stop_preview()
 
 
-#            break
+            break
             #flag = 0
             #cnt = 0
 
         
 def RCV_cam():
+    '''
+    camera = PiCamera()
+    camera.resolution = (640, 480)
+    camera.framerate = 10
+    camera.start_preview()
+    date = datetime.now().strftime('%y%m%d_%H%M%S')
+    file_path = ('/home/pi/Documents/dat/'+date+'('+str(i)+').h264')
+
+    camera.start_recording(file_path)
+    '''
     while True:
 #        if flag == 0 :
 
-        if (flag.value == 1):
+        if (flag[0] ==1):
             print("camera start")
             camera = PiCamera()
             camera.resolution = (640, 480)
             camera.framerate = 10
             camera.start_preview()
-            camera.start_recording('/media/pi/8935-96CD/'+'test.h264')
+            camera.start_recording('/home/pi/Documents/dat/'+datetime.now().strftime('%y%m%d_%H%M%S')+'.h264')
 
-        if (flag.value == 2) :
+        if (flag[0] == 2) :
             print("cam end :", time.time() - start)
             camera.stop_recording()
             camera.stop_preview()
-
+    
 ########################### main #################################
 # determine USBserial device
 port_result = []
