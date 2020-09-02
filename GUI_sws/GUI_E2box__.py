@@ -44,45 +44,48 @@ def RCV_IMU(s, i):
     if i == 0:
         camera = PiCamera()
         root.title('IMU - right')
-        root.geometry('720x456+360+0')
-    else:
-        root.title('IMU - left')
-        root.geometry('720x456+0+0')
-    root.resizable(False, False)
+        root.geometry('720x456') #720x456+360+0
+        
+        background_image=PhotoImage(file = "/home/pi/Desktop/sws/GUI_sws/_bg.png")
+        background_label = Label(root, image=background_image)
+        background_label.place(x=0, y=0, relwidth=1, relheight=1)
 
-    background_image=PhotoImage(file = "/home/pi/Desktop/sws/GUI_sws/_bg.png")
-    background_label = Label(root, image=background_image)
-    background_label.place(x=0, y=0, relwidth=1, relheight=1)
+        frame = Frame(root, width = 150, background = 'white')
+        frame.place(anchor='nw', relx = 0.04, rely = 0.09)
 
-    frame = Frame(root, width = 150, background = 'white')
-    frame.place(anchor='nw', relx = 0.04, rely = 0.09)
+        fontstyle = tkFont.Font(family = 'Courier', size = 10)
 
-    fontstyle = tkFont.Font(family = 'Courier', size = 10)
+        lbl_euler = Label(frame, text = "Euler(RPY)(deg)", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 18, background = 'white')
+        lbl_euler.grid(row = 0, column = 0)    
+        lbl_gyro = Label(frame, text = "Gyro(XYZ)(DPS)", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 18, background = 'white')
+        lbl_gyro.grid(row = 1, column = 0)
+        lbl_accel = Label(frame, text = "Accel(XYZ)(g)", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 18, background = 'white')
+        lbl_accel.grid(row = 2, column = 0)
+        lbl_magnet = Label(frame, text = "Magnet(XYZ)(uT)", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 18, background = 'white')
+        lbl_magnet.grid(row = 3, column = 0)
+        lbl_battery = Label(frame, text = "Battery(%)", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 18, background = 'white')
+        lbl_battery.grid(row = 4, column = 0)
+    #    lbl_distance = Label(frame, text = "distance(km)", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 18, background = 'white')
+    #    lbl_distance.grid(row = 5, column = 0)
+    #    lbl_RPM = Label(frame, text = "RPM", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 18, background = 'white')
+    #    lbl_RPM.grid(row = 6, column = 0)
+        lbl_stat = Label(frame, text = "status", font = fontstyle, pady =2, relief = 'solid', borderwidth = 1, width = 18, background = 'white')
+        lbl_stat.grid(row = 6, column = 0)
 
-    lbl_euler = Label(frame, text = "Euler(RPY)(deg)", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 18, background = 'white')
-    lbl_euler.grid(row = 0, column = 0)    
-    lbl_gyro = Label(frame, text = "Gyro(XYZ)(DPS)", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 18, background = 'white')
-    lbl_gyro.grid(row = 1, column = 0)
-    lbl_accel = Label(frame, text = "Accel(XYZ)(g)", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 18, background = 'white')
-    lbl_accel.grid(row = 2, column = 0)
-    lbl_magnet = Label(frame, text = "Magnet(XYZ)(uT)", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 18, background = 'white')
-    lbl_magnet.grid(row = 3, column = 0)
-    lbl_battery = Label(frame, text = "Battery(%)", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 18, background = 'white')
-    lbl_battery.grid(row = 4, column = 0)
-#    lbl_distance = Label(frame, text = "distance(km)", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 18, background = 'white')
-#    lbl_distance.grid(row = 5, column = 0)
-#    lbl_RPM = Label(frame, text = "RPM", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 18, background = 'white')
-#    lbl_RPM.grid(row = 6, column = 0)
-    lbl_stat = Label(frame, text = "status", font = fontstyle, pady =2, relief = 'solid', borderwidth = 1, width = 18, background = 'white')
-    lbl_stat.grid(row = 6, column = 0)
-
-    var = []
-    lbl_txt = []
+        var = []
+        lbl_txt = []
     
-    for iter in range(7) :
-        var.append(StringVar())
-        lbl_txt.append(Label(frame, textvariable = var[-1], relief = 'solid', width = 22, borderwidth = 1, font = fontstyle, pady=2, background = 'white'))
-        lbl_txt[iter].grid(row = iter, column = 1)
+        for iter in range(7) :
+            var.append(StringVar())
+            lbl_txt.append(Label(frame, textvariable = var[-1], relief = 'solid', width = 22, borderwidth = 1, font = fontstyle, pady=2, background = 'white'))
+            lbl_txt[iter].grid(row = iter, column = 1)
+
+
+        
+#     else:
+#         root.title('IMU - left')
+#         root.geometry('720x456+0+0')
+#     root.resizable(False, False)
 
 
 

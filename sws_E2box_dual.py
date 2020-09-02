@@ -34,7 +34,7 @@ def RCV_IMU(s, i):
         if (flag[i] == 0):
             #create csv file
             date = datetime.now().strftime('%y%m%d_%H%M%S')
-            file_path = ('/home/pi/Documents/dat/'+date+'('+str(i)+').csv')
+            file_path = ('/media/pi/869EE7369EE71E05/'+date+'('+str(i)+').csv')
             print("IMU "+str(i)+" start time :" ,date)
             file_ = open(file_path, 'a')
             file_.write("sequence,EulerR,EulerP,EulerY,GyroX,GyroY,GyroZ,AccelX,AccelY,AccelZ,MagnetX,MagnetY,MagnetZ,RPM,time\r\n")
@@ -46,8 +46,8 @@ def RCV_IMU(s, i):
                 camera = PiCamera()
                 camera.resolution = (640, 480)
                 camera.framerate = 10
-                camera.start_preview(fullscreen = false, window = (-320,0,640,480))
-                camera.start_recording('/home/pi/Documents/dat/'+ date +'.h264')
+               # camera.start_preview(fullscreen = false, window = (-320,0,640,480))
+                camera.start_recording('/media/pi/869EE7369EE71E05/'+ date +'.h264')
 
             
         # IMU records data to .csv
@@ -61,7 +61,11 @@ def RCV_IMU(s, i):
   #              file_.write("%d, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %d, %.3f\r\n"%(cnt, data[2]/100, data[3]/100, data[4]/100, data[5]/10, data[6]/10, data[7]/10, data[8]/1000, data[9]/1000, data[10]/1000, data[11]/10, data[12]/10, data[13]/10, time.time() - start))
             
             cnt = cnt + 1
+            
+            if (i == 0) :
+                print(str(i)+" count: ",cnt, end='\r')
         
+            
         if (time.time() - start)>=300: # 5min 300, 1min 60 #cnt >= 300000: after 5 min (1000Hz receiving)
             flag[i] = 2            
         # if record end, initialize variables and return to start
@@ -71,12 +75,12 @@ def RCV_IMU(s, i):
             if (i == 0):
                 print("camera end")
                 camera.stop_recording()
-                camera.stop_preview()
+                camera.close()
+              #  camera.stop_preview()
 
 
-            break
-            #flag = 0
-            #cnt = 0
+            flag[i] = 0
+            cnt = 0
 
         
 def RCV_cam():
@@ -99,7 +103,7 @@ def RCV_cam():
             camera.resolution = (640, 480)
             camera.framerate = 10
             camera.start_preview()
-            camera.start_recording('/home/pi/Documents/dat/'+datetime.now().strftime('%y%m%d_%H%M%S')+'.h264')
+            camera.start_recording('/media/pi/869EE7369EE71E05/'+datetime.now().strftime('%y%m%d_%H%M%S')+'.h264')
 
         if (flag[0] == 2) :
             print("cam end :", time.time() - start)
