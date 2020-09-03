@@ -4,31 +4,35 @@ import struct
 import glob
 import threading
 import time
-import math
 from datetime import datetime
 from picamera import PiCamera
-from multiprocessing import Process, Queue, Value, Array
+from multiprocessing import Process, Queue, Value, Array, Lock
+import multiprocessing as mp
 
+from copy import deepcopy
+
+from tkinter import *
+import tkinter.font as tkFont
+from PIL import Image, ImageTk
 ##########################################################################
 # gui for EBIMU24GV5
 ##########################################################################
 #flag = 0
 flag = Array('i', [0,0,0,0])
-#sensor_string = Array(c_char_p, 4)
-bat = Value('d', 0.0)
+#sensor_data = Array('i', [0,0,0,0,0,0,0,0,0,0])
+sensor_data = mp.Array('i', [0]*10)
+lock=Lock()
+ 
+# sensor_accel = Array('b', 1)
+# sensor_magnet = Array('b', 1)
+# sensor_bat = Value('d', 0.0)
 
-RPM = 0
-dist = 0
 cnt = 0
-pi = math.pi
 data = []
-threads = []
+threads=[]
 ###########################################################################
 def RCV_IMU(s, i):
     t = []
-    global data
-    global RPM
-    global dist
     cnt = 0
     time_ref = time.time()
     while True:
@@ -54,15 +58,19 @@ def RCV_IMU(s, i):
                 file_.write("%d, %f, %f, %f, %f, %f, %f, %f, %f, %f\r\n"%(cnt, data[5]/10, data[6]/10, data[7]/10, data[8]/1000, data[9]/1000, data[10]/1000, data[11]/10, data[12]/10, data[13]/10))
                 
             cnt = cnt + 1
-            
-#             if cnt % 100 == 0 : #every 1 second, update GUI
-#                 sensor_string[0] = '|'.join([ f'{(x / 100):.2f}' for x in data[2:5] ]) #Euler
-#                 sensor_string[1] = '|'.join([ f'{(x / 10):.1f}' for x in data[5:8] ])
-#                 sensor_string[2] = '|'.join([ f'{(x / 1000):.3f}' for x in data[8:11] ])
-#                 sensor_string[3] = '|'.join([ f'{(x / 10):.1f}' for x in data[11:14] ])
-#                 var_battery = data[14]
+            if(i == 0):
+                if cnt % 10 == 0 : #every 1 second, update GUI
+    #                 sensor_data[0] = '|'.join([ f'{(x / 10):.1f}' for x in data[5:8] ])
+    #                 sensor_data[1] = '|'.join([ f'{(x / 1000):.3f}' for x in data[8:11] ])
+    #                 sensor_data[2] = '|'.join([ f'{(x / 10):.1f}' for x in data[11:14] ])
+    #                 sensor_bat.value = data[14]
+    
+                    sensor_data = deepcopy(data[5:15])
+#                     print(sensor_data[0], sensor_data[1], sensor_data[2], sensor_data[3], sensor_data[4], sensor_data[5], sensor_data[6], sensor_data[7], sensor_data[8], sensor_data[9])
+#                     for i, x in enumerate(data[5:15]):
+#                         sensor_data[i] = x
+#                         print(str(i), sensor_data[i])
 
-            
             if (time.time() - start)>=300: # 5min 300, 1min 60 #cnt >= 300000: after 5 min (1000Hz receiving)
                 print(str(cnt)+ ","+f'{(cnt / 3000):.2f}'+"%"  + " IMU " + str(i) + " end : ", time.time() - start)
                 flag[i] = 2            
@@ -105,8 +113,8 @@ def RCV_cam():
     except KeyboardInterrupt:
         camera.close()
 
-def GUI():
-
+def GUI(sensor_data, lock):
+  
     root = Tk()
     root.title('MHE_MeasureWindow')
     root.geometry('720x456+0+0')
@@ -121,27 +129,26 @@ def GUI():
 
     fontstyle = tkFont.Font(family = 'Courier', size = 12)
 
-    lbl_euler = Label(frame, text = "Euler(RPY)(deg)", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 18, background = 'white')
-    lbl_euler.grid(row = 0, column = 0)    
+  
     lbl_gyro = Label(frame, text = "Gyro(XYZ)(DPS)", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 18, background = 'white')
-    lbl_gyro.grid(row = 1, column = 0)
+    lbl_gyro.grid(row = 0, column = 0)
     lbl_accel = Label(frame, text = "Accel(XYZ)(g)", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 18, background = 'white')
-    lbl_accel.grid(row = 2, column = 0)
+    lbl_accel.grid(row = 1, column = 0)
     lbl_magnet = Label(frame, text = "Magnet(XYZ)(uT)", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 18, background = 'white')
-    lbl_magnet.grid(row = 3, column = 0)
+    lbl_magnet.grid(row = 2, column = 0)
     lbl_battery = Label(frame, text = "Battery(%)", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 18, background = 'white')
-    lbl_battery.grid(row = 4, column = 0)
+    lbl_battery.grid(row = 3, column = 0)
     #    lbl_distance = Label(frame, text = "distance(km)", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 18, background = 'white')
     #    lbl_distance.grid(row = 5, column = 0)
     #    lbl_RPM = Label(frame, text = "RPM", font = fontstyle, pady=2, relief = 'solid', borderwidth = 1, width = 18, background = 'white')
     #    lbl_RPM.grid(row = 6, column = 0)
     lbl_stat = Label(frame, text = "status", font = fontstyle, pady =2, relief = 'solid', borderwidth = 1, width = 18, background = 'white')
-    lbl_stat.grid(row = 6, column = 0)
+    lbl_stat.grid(row = 4, column = 0)
     
     var = []
     lbl_txt = []
     
-    for iter in range(10) :
+    for iter in range(5) :
         var.append(StringVar())
         lbl_txt.append(Label(frame, textvariable = var[-1], relief = 'solid', width = 22, borderwidth = 1, font = fontstyle, pady=2, background = 'white'))
         lbl_txt[iter].grid(row = iter, column = 1)
@@ -149,26 +156,33 @@ def GUI():
   
     frame.update()
     # when IMU records data, update GUI window
-    while flag == 1 :
-        if type(data) != type((1,))  : continue
+    while flag[0] == 1 :
+  #      if type(data) != type((1,))  : continue
         
-        var_Euler = '|'.join([ f'{(x / 100):.2f}' for x in data[2:5] ])
-        var_Gyro = '|'.join([ f'{(x / 10):.1f}' for x in data[5:8] ])
-        var_Accel = '|'.join([ f'{(x / 1000):.3f}' for x in data[8:11] ])
-        var_Magnet = '|'.join([ f'{(x / 10):.1f}' for x in data[11:14] ])
-        var_battery = data[14]
+#         var_Gyro = sensor_data[0]
+#         var_Accel = sensor_data[1] 
+#         var_Magnet = sensor_data[2]  
+#         var_battery = sensor_bat
+        print(sensor_data[0], sensor_data[1], sensor_data[2], sensor_data[3], sensor_data[4], sensor_data[5], sensor_data[6], sensor_data[7], sensor_data[8], sensor_data[9])
+        var_Gyro = '|'.join([ f'{(x / 10):.1f}' for x in sensor_data[0:3] ])
+        var_Accel = '|'.join([ f'{(x / 1000):.3f}' for x in sensor_data[3:6] ])
+        var_Magnet = '|'.join([ f'{(x / 10):.1f}' for x in sensor_data[6:9] ])
+        var_battery = sensor_data[9]
+    #           sensor_data[0] = '|'.join([ f'{(x / 10):.1f}' for x in data[5:8] ])
+    #                 sensor_data[1] = '|'.join([ f'{(x / 1000):.3f}' for x in data[8:11] ])
+    #                 sensor_data[2] = '|'.join([ f'{(x / 10):.1f}' for x in data[11:14] ])
+        
+#         print(var_Gyro, var_Accel, var_Magnet, var_battery)
 
-        var[0].set(var_Euler)
-        var[1].set(var_Gyro)
-        var[2].set(var_Accel)
-        var[3].set(var_Magnet)
-        var[4].set(var_battery)                
+        var[0].set(var_Gyro)
+        var[1].set(var_Accel)
+        var[2].set(var_Magnet)
+        var[3].set(var_battery)                
 #       var[5].set(f'{dist/1000:.3f}')
 #       var[6].set(f'{RPM:.3f}')
-        var[6].set("recording...")
+        var[4].set("recording...")
 
         frame.update()
-
 ########################### main #################################
 # determine USBserial device
 port_result = []
@@ -201,6 +215,8 @@ for iter in range(len(ser_)):
    threads.append(Process(target = RCV_IMU, args = (ser_[iter], iter)))
 
 threads.append(Process(target = RCV_cam))
+
+threads.append(Process(target = GUI, args=(sensor_data,lock)))
 
 
 print(threads)
