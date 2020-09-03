@@ -18,8 +18,11 @@ from PIL import Image, ImageTk
 # gui for EBIMU24GV5
 ##########################################################################
 #flag = 0
+manager = mp.Manager()
+# final_list = manager.list()
+# final_list = [0]*10
 flag = Array('i', [0,0,0,0])
-#sensor_data = Array('i', [0,0,0,0,0,0,0,0,0,0])
+final_list = Array('i', [0,0,0,0,0,0,0,0,0,0])
 sensor_data = mp.Array('i', [0]*10)
 lock=Lock()
  
@@ -59,14 +62,19 @@ def RCV_IMU(s, i):
                 
             cnt = cnt + 1
             if(i == 0):
-                if cnt % 10 == 0 : #every 1 second, update GUI
+                if cnt % 100  == 0 : #every 1 second, update GUI
     #                 sensor_data[0] = '|'.join([ f'{(x / 10):.1f}' for x in data[5:8] ])
     #                 sensor_data[1] = '|'.join([ f'{(x / 1000):.3f}' for x in data[8:11] ])
     #                 sensor_data[2] = '|'.join([ f'{(x / 10):.1f}' for x in data[11:14] ])
     #                 sensor_bat.value = data[14]
-    
-                    sensor_data = deepcopy(data[5:15])
-#                     print(sensor_data[0], sensor_data[1], sensor_data[2], sensor_data[3], sensor_data[4], sensor_data[5], sensor_data[6], sensor_data[7], sensor_data[8], sensor_data[9])
+                    for n, x in enumerate (data[5:15]):
+                        final_list[n] = x
+                        
+#                     final_list.extend(data)
+#                     sensor_data = deepcopy(data[5:15])
+#                     print(data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9])
+#                     print('final_list',final_list[0], final_list[1], final_list[2], final_list[3], final_list[4], final_list[5], final_list[6], final_list[7], final_list[8], final_list[9])
+
 #                     for i, x in enumerate(data[5:15]):
 #                         sensor_data[i] = x
 #                         print(str(i), sensor_data[i])
@@ -113,8 +121,8 @@ def RCV_cam():
     except KeyboardInterrupt:
         camera.close()
 
-def GUI(sensor_data, lock):
-  
+def GUI():
+    past_value = 0
     root = Tk()
     root.title('MHE_MeasureWindow')
     root.geometry('720x456+0+0')
@@ -154,26 +162,38 @@ def GUI(sensor_data, lock):
         lbl_txt[iter].grid(row = iter, column = 1)
      
   
-    frame.update()
+#     frame.update()
     # when IMU records data, update GUI window
-    while flag[0] == 1 :
+    while True:
+#         if flag[0] == 1 :
   #      if type(data) != type((1,))  : continue
         
 #         var_Gyro = sensor_data[0]
 #         var_Accel = sensor_data[1] 
 #         var_Magnet = sensor_data[2]  
 #         var_battery = sensor_bat
-        print(sensor_data[0], sensor_data[1], sensor_data[2], sensor_data[3], sensor_data[4], sensor_data[5], sensor_data[6], sensor_data[7], sensor_data[8], sensor_data[9])
-        var_Gyro = '|'.join([ f'{(x / 10):.1f}' for x in sensor_data[0:3] ])
-        var_Accel = '|'.join([ f'{(x / 1000):.3f}' for x in sensor_data[3:6] ])
-        var_Magnet = '|'.join([ f'{(x / 10):.1f}' for x in sensor_data[6:9] ])
-        var_battery = sensor_data[9]
+#         print(sensor_data[0], sensor_data[1], sensor_data[2], sensor_data[3], sensor_data[4], sensor_data[5], sensor_data[6], sensor_data[7], sensor_data[8], sensor_data[9])
+#         var_Gyro = '|'.join([ f'{(x / 10):.1f}' for x in sensor_data[0:3] ])
+#         var_Accel = '|'.join([ f'{(x / 1000):.3f}' for x in sensor_data[3:6] ])
+#         var_Magnet = '|'.join([ f'{(x / 10):.1f}' for x in sensor_data[6:9] ])
+#         var_battery = sensor_data[9]
+        if(past_value == final_list[4]):
+            continue
+        past_value = final_list[4]
+        
+        
+
+        var_Gyro = '|'.join([ f'{(x / 10):.1f}' for x in final_list[0:3] ])
+        var_Accel = '|'.join([ f'{(x / 1000):.3f}' for x in final_list[3:6] ])
+        var_Magnet = '|'.join([ f'{(x / 10):.1f}' for x in final_list[6:9] ])
+        var_battery = final_list[9]
+
     #           sensor_data[0] = '|'.join([ f'{(x / 10):.1f}' for x in data[5:8] ])
     #                 sensor_data[1] = '|'.join([ f'{(x / 1000):.3f}' for x in data[8:11] ])
     #                 sensor_data[2] = '|'.join([ f'{(x / 10):.1f}' for x in data[11:14] ])
         
 #         print(var_Gyro, var_Accel, var_Magnet, var_battery)
-
+# 
         var[0].set(var_Gyro)
         var[1].set(var_Accel)
         var[2].set(var_Magnet)
@@ -215,8 +235,7 @@ for iter in range(len(ser_)):
    threads.append(Process(target = RCV_IMU, args = (ser_[iter], iter)))
 
 threads.append(Process(target = RCV_cam))
-
-threads.append(Process(target = GUI, args=(sensor_data,lock)))
+threads.append(Process(target = GUI))
 
 
 print(threads)
