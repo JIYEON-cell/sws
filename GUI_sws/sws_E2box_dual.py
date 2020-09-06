@@ -56,7 +56,7 @@ def RCV_IMU(s, i):
                 
             cnt = cnt + 1
             if(i == 0):
-                if cnt % 200  == 0 : #every 1 second, update GUI
+                if cnt % 200  == 0 : #every 0.2 second, update GUI
                     for n, x in enumerate (data[5:15]):
                         final_list[n] = x                 
 
@@ -72,7 +72,7 @@ def RCV_IMU(s, i):
                 flag[0] = 0
                 flag[1] = 0
 
-        
+'''        
 def RCV_cam():
 
 
@@ -93,7 +93,7 @@ def RCV_cam():
                 camera.start_recording('/media/pi/728EB4FE8EB4BC43/'+datetime.now().strftime('%y%m%d_%H%M%S')+'.h264')
                 flag_cam = 1
                 
-            if (flag[0] == 2 and flag[1] == 1 and flag_cam == 1) :
+            if (flag[0] == 2 and flag[1] == 2 and flag_cam == 1) :
                 print("cam end :", time.time() - start)
                 camera.stop_recording()
                 flag_cam = 0
@@ -103,8 +103,8 @@ def RCV_cam():
 #                camera.close()
     except KeyboardInterrupt:
         camera.close()
-
-def GUI():
+'''
+def GUI_CAM():
     past_value = 0
     root = Tk()
     root.title('MHE_MeasureWindow')
@@ -138,6 +138,13 @@ def GUI():
     
     var = []
     lbl_txt = []
+
+    camera = PiCamera()
+    camera.resolution = (640, 480)
+    camera.framerate = 40
+
+    flag_cam = 0
+
     
     for iter in range(5) :
         var.append(StringVar())
@@ -147,39 +154,50 @@ def GUI():
   
 #     frame.update()
     # when IMU records data, update GUI window
-    while True:
-#         if flag[0] == 1 :
-  #      if type(data) != type((1,))  : continue
-        
 
-        if(past_value == final_list[4]):
-            continue
-        past_value = final_list[4]
-        
-        
-
-        var_Gyro = '|'.join([ f'{(x / 10):.1f}' for x in final_list[0:3] ])
-        var_Accel = '|'.join([ f'{(x / 1000):.3f}' for x in final_list[3:6] ])
-        var_Magnet = '|'.join([ f'{(x / 10):.1f}' for x in final_list[6:9] ])
-        var_battery = final_list[9]
+    try:
+        while True:
+    #         if flag[0] == 1 :
+    #      if type(data) != type((1,))  : continue
 
 
-# 
-        var[0].set(var_Gyro)
-        var[1].set(var_Accel)
-        var[2].set(var_Magnet)
-        var[3].set(var_battery)                
-#       var[5].set(f'{dist/1000:.3f}')
-#       var[6].set(f'{RPM:.3f}')
-        var[4].set("recording...")
+            if (flag[0] == 1 and flag[1] == 1 and flag_cam == 0):
+                print("camera start")
+                start = time.time()
+#                 camera.start_preview()
+                camera.start_recording('/media/pi/728EB4FE8EB4BC43/'+datetime.now().strftime('%y%m%d_%H%M%S')+'.h264')
+                flag_cam = 1
 
-        frame.update()
-        
-            #           sensor_data[0] = '|'.join([ f'{(x / 10):.1f}' for x in data[5:8] ])
-    #                 sensor_data[1] = '|'.join([ f'{(x / 1000):.3f}' for x in data[8:11] ])
-    #                 sensor_data[2] = '|'.join([ f'{(x / 10):.1f}' for x in data[11:14] ])
-        
+            if (flag[0] == 2 and flag[1] == 2 and flag_cam == 1) :
+                print("cam end :", time.time() - start)
+                camera.stop_recording()
+                flag_cam = 0
+            #    camera.close()      
+
+            if(past_value == final_list[4]):
+                continue
+            past_value = final_list[4]
+            
+            var_Gyro = '|'.join([ f'{(x / 10):.1f}' for x in final_list[0:3] ])
+            var_Accel = '|'.join([ f'{(x / 1000):.3f}' for x in final_list[3:6] ])
+            var_Magnet = '|'.join([ f'{(x / 10):.1f}' for x in final_list[6:9] ])
+            var_battery = final_list[9]
 #         print(var_Gyro, var_Accel, var_Magnet, var_battery)
+     
+            var[0].set(var_Gyro)
+            var[1].set(var_Accel)
+            var[2].set(var_Magnet)
+            var[3].set(var_battery)                
+    #       var[5].set(f'{dist/1000:.3f}')
+    #       var[6].set(f'{RPM:.3f}')
+            var[4].set("recording...")
+
+            frame.update()
+
+    except KeyboardInterrupt:
+        camera.close()   
+
+        
 ########################### main #################################
 # determine USBserial device
 port_result = []
@@ -212,7 +230,7 @@ for iter in range(len(ser_)):
    threads.append(Process(target = RCV_IMU, args = (ser_[iter], iter)))
 
 # threads.append(Process(target = RCV_cam))
-threads.append(Process(target = GUI))
+threads.append(Process(target = GUI_CAM))
 
 
 print(threads)
